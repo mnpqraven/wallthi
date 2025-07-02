@@ -1,0 +1,10 @@
+[general]
+duration = 60
+monitors = ["HDMI-A-1", "other_monitors"]
+
+[monitor."HDMI-A-1"]
+resolution = "1920x1080"
+transform = 90           # opt
+
+[monitor."others"]
+resolution = "1920x1080"
