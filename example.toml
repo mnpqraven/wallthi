@@ -1,6 +1,7 @@
 [general]
 duration = 60
-monitors = ["HDMI-A-1", "other_monitors"]
+path = ["~/random/path"]
+path_vertical = ["~/random/path"]
 
 [monitor."HDMI-A-1"]
 resolution = "1920x1080"
