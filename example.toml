@@ -6,6 +6,7 @@ path_vertical = ["~/random/path"]
 [monitor."HDMI-A-1"]
 resolution = "1920x1080"
 transform = 90           # opt
+vertical = true
 
 [monitor."others"]
 resolution = "1920x1080"

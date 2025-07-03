@@ -1,79 +1,46 @@
-use std::{collections::HashMap, path::Path};
-
+use crate::{
+    command::{
+        Commands, run_daemon,
+        status::daemon_status,
+        swww_control::{pause_all, start_or_resume},
+    },
+    dot_config::{DotfileTreeConfig, read_config},
+    utils::error::AppError,
+};
 use clap::Parser;
+use std::path::PathBuf;
 
-/// later to be dotfile
-struct DotfileTreeConfig {
-    /// general configuration
-    general: GeneralConfig,
-    /// monitor-dependant configuration
-    monitor: HashMap<String, MonitorConfig>,
-}
+mod command;
+mod dot_config;
+mod utils;
 
-struct GeneralConfig {
-    /// duration between each transition
-    duration: u32,
-    /// dirs of horizontal wallpapers
-    // NOTE: this path needs to be able to follow symlinks
-    path: Vec<String>,
-    /// dirs of vertical wallpapers
-    // NOTE: this path needs to be able to follow symlinks
-    path_vertical: Vec<String>,
-}
-
-struct MonitorConfig {
-    resolution: String,
-    /// transform rotation degree
-    transform: Option<i32>,
-}
-
-#[derive(Parser)]
+#[derive(Parser, Debug)]
+#[command(version, about)]
 struct CliArgs {
     /// toml config file
-    config: String,
+    #[arg(long)]
+    config: Option<PathBuf>,
+    #[command(subcommand)]
+    command: Commands,
 }
 
-fn main() {
-    println!("Hello, world!");
-}
+fn main() -> Result<(), AppError> {
+    let args = CliArgs::parse();
+    let conf = match args.config {
+        Some(conf_path) => read_config(conf_path)?,
+        None => DotfileTreeConfig::default(),
+    };
+    println!("{conf:?}");
 
-fn read_config<P: AsRef<Path>>(path: P) -> DotfileTreeConfig {
-    todo!()
-}
-
-struct SwwwConf {
-    resize_type: ResizeType,
-    transition_fps: i32,
-    transition_step: i32,
-}
-
-impl Default for SwwwConf {
-    fn default() -> Self {
-        Self {
-            resize_type: ResizeType::Crop,
-            transition_fps: 60,
-            transition_step: 2,
+    match args.command {
+        Commands::Daemon => run_daemon(),
+        Commands::Status => {
+            let status = daemon_status()?;
+            println!("{status:?}");
         }
-    }
-}
+        Commands::Pause => pause_all(),
+        Commands::Start => start_or_resume(),
+    };
 
-enum ResizeType {
-    Crop,
-}
-
-fn command_builder() {}
-
-struct WallthiStatus {
-    // key: monitor name
-    // value: current information about he wallpaper
-    current_wallpaper: HashMap<String, MonitorStatus>,
-}
-struct MonitorStatus {
-    path: Option<String>,
-    remaining_duration: u64,
-}
-fn status() {}
-
-fn randomizer() -> i32 {
-    todo!()
+    Ok(())
 }
