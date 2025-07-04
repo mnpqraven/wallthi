@@ -67,6 +67,7 @@ pub fn hardcode_subprocess() {
     // TODO: resolver for ~
     let wall_dir = "/home/othi/wallpaper/horizontal";
 
+    // TODO: killswitch
     loop {
         let img = random_img(wall_dir);
         let conf = SwwwConf::default();
@@ -101,6 +102,8 @@ fn execute_swww<P: AsRef<Path>>(
     }
 }
 
+/// NOTE: this only scans for direct files in the directory and won't walk
+/// down the tree
 #[instrument(skip(path), ret)]
 fn random_img<P: AsRef<Path>>(path: P) -> PathBuf {
     // if path is a readable file, ret
