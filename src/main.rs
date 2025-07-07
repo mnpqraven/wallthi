@@ -37,7 +37,10 @@ fn main() -> Result<(), AppError> {
     info!("{dot_conf:?}");
 
     match args.command {
-        Commands::Daemon => run_daemon(),
+        Commands::Daemon => {
+            let _ = run_daemon();
+            todo!();
+        }
         Commands::Status => {
             let status = daemon_status()?;
             println!("{status:?}");
