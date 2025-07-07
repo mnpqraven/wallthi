@@ -9,4 +9,7 @@ pub enum AppError {
 
     #[error("Invalid configuration format")]
     ConfigFormat(#[from] toml::de::Error),
+
+    #[error("Daemon error")]
+    Daemon(#[from] daemonize::Error),
 }
