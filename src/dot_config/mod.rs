@@ -9,6 +9,8 @@ pub struct DotfileTreeConfig {
     pub general: GeneralConfig,
     /// monitor-dependant configuration
     pub monitor: HashMap<String, MonitorConfig>,
+    /// optional configuration of the swww daemon
+    pub swww: Option<SwwwConf>,
 }
 
 impl Default for DotfileTreeConfig {
@@ -17,6 +19,29 @@ impl Default for DotfileTreeConfig {
             general: GeneralConfig::default(),
             // TODO: see if this is valid or do we need to detect current monitors
             monitor: HashMap::new(),
+            swww: Some(SwwwConf::default()),
+        }
+    }
+}
+
+#[derive(Clone, Debug, Serialize, Deserialize)]
+pub struct SwwwConf {
+    pub resize_type: ResizeType,
+    pub transition_fps: i32,
+    pub transition_step: i32,
+}
+
+#[derive(Clone, Debug, Serialize, Deserialize)]
+pub enum ResizeType {
+    Crop,
+}
+
+impl Default for SwwwConf {
+    fn default() -> Self {
+        Self {
+            resize_type: ResizeType::Crop,
+            transition_fps: 60,
+            transition_step: 2,
         }
     }
 }
