@@ -1,16 +1,18 @@
 use crate::command::img_paths::random_img;
+use crate::command::state::AppState;
 use crate::dot_config::SwwwConf;
 use crate::{
     dot_config::{DotfileTreeConfig, MonitorConfig},
     utils::error::AppError,
 };
 use clap::Subcommand;
+use std::sync::{Arc, RwLock};
 use std::{path::Path, process::Command, thread::sleep, time::Duration};
 use tracing::{error, info, instrument};
 
 pub mod daemon;
 mod img_paths;
-pub mod swww_control;
+pub mod state;
 
 #[derive(Subcommand, Debug)]
 pub enum Commands {
@@ -24,7 +26,12 @@ pub enum Commands {
     Start,
 }
 
-pub fn start_blocking_loop(monitor: &str, conf: &MonitorConfig, global_conf: &DotfileTreeConfig) {
+pub fn start_blocking_loop(
+    monitor: &str,
+    conf: &MonitorConfig,
+    global_conf: &DotfileTreeConfig,
+    daemon_state: Arc<RwLock<AppState>>,
+) {
     info!("logging isolation code snippets {conf:?} {global_conf:?}");
     // TODO: resolver for ~
     let wall_dirs = match conf.vertical {
@@ -36,9 +43,13 @@ pub fn start_blocking_loop(monitor: &str, conf: &MonitorConfig, global_conf: &Do
     // we need some way to talk to this loop for status + play/pause functions
     loop {
         let img = random_img(wall_dirs.clone());
-
-        // TODO: unwrap
-        execute_swww(img, global_conf.swww.clone().unwrap_or_default(), monitor).unwrap();
+        match daemon_state.try_read() {
+            Ok(t) if !t.is_paused => {
+                // TODO: unwrap
+                execute_swww(img, global_conf.swww.clone().unwrap_or_default(), monitor).unwrap();
+            }
+            _ => {}
+        }
 
         sleep(Duration::from_secs(global_conf.general.duration.into()));
     }

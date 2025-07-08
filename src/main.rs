@@ -3,13 +3,16 @@ use crate::{
         Commands,
         daemon::{daemon_status, start_daemon},
         start_blocking_loop,
-        swww_control::{pause_all, start_or_resume},
+        state::AppState,
     },
     dot_config::{DotfileTreeConfig, read_config},
     utils::error::AppError,
 };
 use clap::Parser;
-use std::path::PathBuf;
+use std::{
+    path::PathBuf,
+    sync::{Arc, RwLock},
+};
 use tracing::info;
 
 mod command;
@@ -37,28 +40,44 @@ fn main() -> Result<(), AppError> {
     };
     info!("{dot_conf:?}");
 
+    // how to access this from the cli ?
+    let app_state = AppState::new().arced();
+
     match args.command {
         Commands::Daemon => {
-            // https://users.rust-lang.org/t/tokio-daemonize-w-privileged-ports/81603
-            // https://stackoverflow.com/questions/76042987/having-problem-in-rust-with-tokio-and-daemonize-how-to-get-them-to-work-togethe
             start_daemon()?;
-            daemon_rt_loop(dot_conf);
+            daemon_rt_loop(dot_conf, app_state)?;
         }
         Commands::Status => {
             let status = daemon_status()?;
             // tokio talks to daemon
             println!("{status:?}");
         }
-        Commands::Pause => pause_all(),
-        Commands::Start => start_or_resume(),
+        Commands::Pause => {}
+        Commands::Start => {}
     };
 
     Ok(())
 }
 
-fn daemon_rt_loop(dot_conf: DotfileTreeConfig) {
+// https://users.rust-lang.org/t/tokio-daemonize-w-privileged-ports/81603
+// https://stackoverflow.com/questions/76042987/having-problem-in-rust-with-tokio-and-daemonize-how-to-get-them-to-work-togethe
+#[tokio::main]
+async fn daemon_rt_loop(
+    dot_conf: DotfileTreeConfig,
+    state: Arc<RwLock<AppState>>,
+) -> Result<(), AppError> {
+    let dot_conf = dot_conf.clone();
     info!("Daemon started with config {dot_conf:?}");
-    for (monitor, monitor_conf) in dot_conf.monitor.iter() {
-        start_blocking_loop(monitor, monitor_conf, &dot_conf);
+    let monitors = dot_conf.monitor.clone();
+
+    for (monitor, monitor_conf) in monitors.into_iter() {
+        let state = state.clone();
+        let dot_conf = dot_conf.clone();
+        tokio::spawn(async move {
+            start_blocking_loop(&monitor, &monitor_conf, &dot_conf, state);
+        });
     }
+
+    Ok(())
 }
