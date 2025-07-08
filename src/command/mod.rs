@@ -26,7 +26,7 @@ pub enum Commands {
     Start,
 }
 
-pub fn start_blocking_loop(
+pub fn swww_loop(
     monitor: &str,
     conf: &MonitorConfig,
     global_conf: &DotfileTreeConfig,
@@ -43,6 +43,7 @@ pub fn start_blocking_loop(
     // we need some way to talk to this loop for status + play/pause functions
     loop {
         let img = random_img(wall_dirs.clone());
+        info!("swww loop: {img:?} {conf:?}");
         match daemon_state.try_read() {
             Ok(t) if !t.is_paused => {
                 // TODO: unwrap
@@ -55,7 +56,6 @@ pub fn start_blocking_loop(
     }
 }
 
-#[instrument(skip(img))]
 fn execute_swww<P: AsRef<Path>>(img: P, swww_conf: SwwwConf, output: &str) -> Result<(), AppError> {
     match img.as_ref().to_str() {
         Some(img_path) => {

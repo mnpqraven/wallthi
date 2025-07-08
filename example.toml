@@ -6,7 +6,8 @@ path_vertical = ["/home/othi/wallpaper/vertical"]
 [monitor."HDMI-A-1"]
 resolution = "1920x1080"
 
-[monitor."others"]
-resolution = "1920x1080"
-transform = 90           # opt
-vertical = true
+# full configuration with all fields
+# [monitor."others"]
+# resolution = "1920x1080"
+# transform = 90           # opt
+# vertical = true
