@@ -2,27 +2,20 @@ use crate::{
     command::{
         Commands,
         daemon::{daemon_status, start_daemon},
-        state::AppState,
+        state::WallthiDaemon,
         swww_loop,
     },
     dot_config::{DotfileTreeConfig, read_config},
     utils::error::AppError,
 };
 use clap::Parser;
-use std::{
-    net::SocketAddr,
-    path::PathBuf,
-    sync::{Arc, RwLock},
-};
-use tokio::{
-    io::AsyncWriteExt,
-    net::{TcpListener, TcpStream},
-};
+use std::path::PathBuf;
+use tokio::net::TcpListener;
 use tracing::{info, warn};
-use tracing_appender::non_blocking::DEFAULT_BUFFERED_LINES_LIMIT;
 
 mod command;
 mod dot_config;
+mod tcp;
 mod utils;
 
 #[derive(Parser, Debug)]
@@ -51,19 +44,19 @@ fn main() -> Result<(), AppError> {
             start_daemon()?;
             daemon_rt_loop(dot_conf)?;
         }
+        Commands::Start => {
+            daemon_rt_loop(dot_conf)?;
+        }
         Commands::Status => {
             let status = daemon_status()?;
             // tokio talks to daemon
             println!("{status:?}");
         }
-        Commands::Pause => {
+        cmd @ (Commands::Pause | Commands::Resume) => {
             let rt = tokio::runtime::Runtime::new().unwrap();
             rt.block_on(async {
-                send_stream().await;
+                let _ = tcp::send_cmd(cmd).await;
             })
-        }
-        Commands::Start => {
-            daemon_rt_loop(dot_conf)?;
         }
     };
 
@@ -74,19 +67,17 @@ fn main() -> Result<(), AppError> {
 // https://stackoverflow.com/questions/76042987/having-problem-in-rust-with-tokio-and-daemonize-how-to-get-them-to-work-togethe
 #[tokio::main]
 async fn daemon_rt_loop(dot_conf: DotfileTreeConfig) -> Result<(), AppError> {
-    // how to access this from the cli ?
-    let state = AppState::new().arced();
+    let daemon = WallthiDaemon::new();
 
-    // TODO: listener in main thread
     // see https://tokio.rs/tokio/tutorial/shared-state
-    let listener = TcpListener::bind("127.0.0.1:6666").await.unwrap();
+    let listener = TcpListener::bind(daemon.addr).await?;
 
     let dot_conf = dot_conf.clone();
     info!("Daemon started with config {dot_conf:?}");
     let monitors = dot_conf.monitor.clone();
 
     for (monitor, monitor_conf) in monitors.into_iter() {
-        let state = state.clone();
+        let state = daemon.app_state.clone();
         let dot_conf = dot_conf.clone();
         let _handle = tokio::spawn(async move {
             info!("starting task for monitor {monitor} with conf {monitor_conf:?}");
@@ -94,43 +85,9 @@ async fn daemon_rt_loop(dot_conf: DotfileTreeConfig) -> Result<(), AppError> {
         });
     }
 
-    let (socket, _) = listener.accept().await.unwrap();
-    let mut buffer = vec![0; 1024];
     // process given listener
-    process_stream(socket, &mut buffer).await;
-
-    Ok(())
-}
-
-async fn process_stream(stream: TcpStream, buffer: &mut Vec<u8>) {
     loop {
-        stream.readable().await.unwrap();
-
-        match stream.try_read(buffer) {
-            Ok(n) => {
-                let message = String::from_utf8_lossy(buffer);
-                // TODO: serde message passing
-                warn!("PAUSING PAUSING {message}");
-                buffer.truncate(n);
-                break;
-            }
-            Err(ref e) if e.kind() == std::io::ErrorKind::WouldBlock => {
-                continue;
-            }
-            Err(e) => {
-                panic!("{e}");
-            }
-        }
+        let (socket, _) = listener.accept().await?;
+        tcp::process_stream(socket, &daemon).await?;
     }
-}
-
-async fn send_stream() {
-    info!("RUNNING PAUSE COMMAND");
-    let addr = "127.0.0.1:6666";
-    let mut conn = TcpStream::connect(addr)
-        .await
-        .expect("tcp socket not found. Is wallthi running?");
-
-    // TODO: serde message passing
-    conn.write_all(b"hello from pause command!").await.unwrap();
 }

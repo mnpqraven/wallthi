@@ -1,7 +1,6 @@
 use rand::seq::IndexedRandom;
 use std::fs::read_dir;
 use std::path::{Path, PathBuf};
-use tracing::instrument;
 
 /// iterates through vec of paths and get a random img from each dir
 pub(super) fn random_img<P: AsRef<Path>>(paths: Vec<P>) -> PathBuf {
@@ -19,7 +18,6 @@ pub(super) fn random_img<P: AsRef<Path>>(paths: Vec<P>) -> PathBuf {
 
 /// NOTE: this only scans for direct files in the directory and won't walk
 /// down the tree
-#[instrument(skip(path), ret)]
 fn random_img_single_path<P: AsRef<Path>>(path: P) -> PathBuf {
     // if path is a readable file, ret
     if path.as_ref().is_file() {

@@ -1,5 +1,7 @@
 use std::sync::{Arc, RwLock};
 
+use crate::{command::Commands, utils::error::AppError};
+
 #[derive(Debug, Clone, Default)]
 pub struct AppState {
     pub is_paused: bool,
@@ -13,5 +15,47 @@ impl AppState {
     /// thread-safe manner
     pub fn arced(self) -> Arc<RwLock<Self>> {
         Arc::new(RwLock::new(self))
+    }
+}
+
+#[derive(Debug)]
+pub struct WallthiDaemon {
+    pub app_state: Arc<RwLock<AppState>>,
+    pub addr: &'static str,
+}
+
+impl WallthiDaemon {
+    const ADDR: &'static str = "127.0.0.1:6666";
+    pub fn new() -> Self {
+        Self {
+            app_state: AppState::new().arced(),
+            addr: Self::ADDR,
+        }
+    }
+    pub fn addr() -> &'static str {
+        Self::ADDR
+    }
+
+    pub fn pause(&self) -> Result<(), AppError> {
+        let mut w = self.app_state.write()?;
+        w.is_paused = true;
+        Ok(())
+    }
+
+    pub fn resume(&self) -> Result<(), AppError> {
+        let mut w = self.app_state.write()?;
+        w.is_paused = false;
+        Ok(())
+    }
+
+    pub fn handle_command(&self, cmd: Commands) -> Result<(), AppError> {
+        match cmd {
+            Commands::Pause => self.pause(),
+            Commands::Resume => self.resume(),
+            _ => {
+                // noop
+                Ok(())
+            }
+        }
     }
 }

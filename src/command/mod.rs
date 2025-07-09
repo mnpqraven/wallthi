@@ -6,15 +6,16 @@ use crate::{
     utils::error::AppError,
 };
 use clap::Subcommand;
+use serde::{Deserialize, Serialize};
 use std::sync::{Arc, RwLock};
 use std::{path::Path, process::Command, thread::sleep, time::Duration};
-use tracing::{error, info, instrument};
+use tracing::{error, info};
 
 pub mod daemon;
 mod img_paths;
 pub mod state;
 
-#[derive(Subcommand, Debug)]
+#[derive(Subcommand, Debug, Serialize, Deserialize, PartialEq)]
 pub enum Commands {
     /// start the application as a daemon
     Daemon,
@@ -22,7 +23,9 @@ pub enum Commands {
     Status,
     /// pause all swww instances in queue
     Pause,
-    /// starts/resumes all swww instances in queue
+    /// resumes all swww instances in queue
+    Resume,
+    /// starts all swww instances in queue
     Start,
 }
 
@@ -43,7 +46,6 @@ pub fn swww_loop(
     // we need some way to talk to this loop for status + play/pause functions
     loop {
         let img = random_img(wall_dirs.clone());
-        info!("swww loop: {img:?} {conf:?}");
         match daemon_state.try_read() {
             Ok(t) if !t.is_paused => {
                 // TODO: unwrap
@@ -59,6 +61,7 @@ pub fn swww_loop(
 fn execute_swww<P: AsRef<Path>>(img: P, swww_conf: SwwwConf, output: &str) -> Result<(), AppError> {
     match img.as_ref().to_str() {
         Some(img_path) => {
+            info!("[SWWW] executing cmd for img {img_path}");
             let _cmd = Command::new("swww")
                 .args(["img", "--resize", "crop", img_path, "-o", &output])
                 .output()
