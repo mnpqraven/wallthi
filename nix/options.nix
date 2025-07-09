@@ -5,6 +5,13 @@
   ...
 }:
 let
+  # ref https://github.com/NixOS/nixpkgs/blob/4ffc4dc91838df228c8214162c106c24ec8fe03f/nixos/modules/programs/starship.nix
+  cfg = config.programs.wallthi;
+  settingsFormat = pkgs.formats.toml { };
+
+  # place this inside xdg config
+  settingsFile = settingsFormat.generate "config.toml" cfg.settings;
+
   monitorConfigType = with lib; {
     resolution = types.string;
     transform = nullOr types.int;
@@ -15,7 +22,7 @@ in
   options = {
     programs.wallthi = {
       enable = lib.mkEnableOption "swww wrapper";
-      config = {
+      settings = {
         general = {
           duration = lib.mkOption {
             default = 60;
@@ -50,5 +57,9 @@ in
         };
       };
     };
+  };
+
+  xdg.configFile."wallthi/config.conf" = {
+    source = settingsFile;
   };
 }
