@@ -5,6 +5,7 @@ use crate::{command::Commands, utils::error::AppError};
 #[derive(Debug, Clone, Default)]
 pub struct AppState {
     pub is_paused: bool,
+    pub should_exit: bool,
 }
 
 impl AppState {
@@ -42,20 +43,26 @@ impl WallthiDaemon {
         Ok(())
     }
 
+    pub fn quit(&self) -> Result<(), AppError> {
+        let mut w = self.app_state.write()?;
+        w.should_exit = true;
+        Ok(())
+    }
+
     pub fn resume(&self) -> Result<(), AppError> {
         let mut w = self.app_state.write()?;
         w.is_paused = false;
         Ok(())
     }
 
+    /// returns a boolean denoting if the daemon should continue or not
     pub fn handle_command(&self, cmd: Commands) -> Result<(), AppError> {
         match cmd {
             Commands::Pause => self.pause(),
             Commands::Resume => self.resume(),
-            _ => {
-                // noop
-                Ok(())
-            }
+            Commands::Quit => self.quit(),
+            // noop
+            _ => Ok(()),
         }
     }
 }

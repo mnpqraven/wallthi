@@ -24,7 +24,7 @@ pub enum AppError {
     BytesSerde(#[from] serde_json::Error),
 }
 
-impl<'a> From<PoisonError<RwLockWriteGuard<'_, AppState>>> for AppError {
+impl From<PoisonError<RwLockWriteGuard<'_, AppState>>> for AppError {
     fn from(_value: PoisonError<RwLockWriteGuard<'_, AppState>>) -> Self {
         Self::Lock
     }

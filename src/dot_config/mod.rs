@@ -1,6 +1,7 @@
 use crate::utils::error::AppError;
 use serde::{Deserialize, Serialize};
 use std::{collections::HashMap, fs::read_to_string, path::Path};
+use strum::IntoStaticStr;
 
 /// later to be dotfile
 #[derive(Clone, Debug, Serialize, Deserialize)]
@@ -31,7 +32,8 @@ pub struct SwwwConf {
     pub transition_step: i32,
 }
 
-#[derive(Clone, Debug, Serialize, Deserialize)]
+#[derive(Clone, Debug, Serialize, Deserialize, IntoStaticStr)]
+#[strum(serialize_all = "lowercase")]
 pub enum ResizeType {
     Crop,
 }

@@ -4,10 +4,7 @@ use std::path::{Path, PathBuf};
 
 /// iterates through vec of paths and get a random img from each dir
 pub(super) fn random_img<P: AsRef<Path>>(paths: Vec<P>) -> PathBuf {
-    let rando_paths: Vec<PathBuf> = paths
-        .iter()
-        .map(|path| random_img_single_path(path))
-        .collect();
+    let rando_paths: Vec<PathBuf> = paths.iter().map(random_img_single_path).collect();
 
     let mut rng = rand::rng();
     let rand_index: Vec<usize> = (0..rando_paths.len()).collect();

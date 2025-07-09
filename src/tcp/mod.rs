@@ -14,7 +14,7 @@ pub async fn send_cmd(cmd: Commands) -> Result<(), AppError> {
     Ok(())
 }
 
-pub async fn process_stream(stream: TcpStream, daemon: &WallthiDaemon) -> Result<(), AppError> {
+pub async fn process_cmd(stream: TcpStream, daemon: &WallthiDaemon) -> Result<(), AppError> {
     let mut buffer = vec![0; 1024];
     stream.readable().await?;
 
@@ -29,12 +29,9 @@ pub async fn process_stream(stream: TcpStream, daemon: &WallthiDaemon) -> Result
 
             let cmd = serde_json::from_slice::<Commands>(&buffer)?;
             info!("[COMMAND] RECEIVED {cmd:?}");
-            daemon.handle_command(cmd)?;
-            return Ok(());
+            daemon.handle_command(cmd)
         }
-        Err(ref e) if e.kind() == std::io::ErrorKind::WouldBlock => {
-            return Ok(());
-        }
+        Err(ref e) if e.kind() == std::io::ErrorKind::WouldBlock => Ok(()),
         Err(e) => {
             panic!("{e}");
         }
