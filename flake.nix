@@ -3,12 +3,18 @@
     flake-utils.url = "github:numtide/flake-utils";
     naersk.url = "github:nix-community/naersk";
     nixpkgs.url = "github:NixOS/nixpkgs/nixpkgs-unstable";
+
+    nixpkgs-mozilla = {
+      url = "github:mozilla/nixpkgs-mozilla";
+      flake = false;
+    };
   };
   outputs =
     {
       flake-utils,
       naersk,
       nixpkgs,
+      nixpkgs-mozilla,
       ...
     }:
     flake-utils.lib.eachDefaultSystem (
@@ -16,8 +22,19 @@
       let
         pkgs = (import nixpkgs) {
           inherit system;
+          overlays = [
+            (import nixpkgs-mozilla)
+          ];
         };
-        naersk' = pkgs.callPackage naersk { };
+        toolchain =
+          (pkgs.rustChannelOf {
+            rustToolchain = ./rust-toolchain.toml;
+            sha256 = "sha256-442fNe+JZCKeR146x4Nh0O00XeAfPWMalJDbV+vJQNg=";
+          }).rust;
+        naersk' = pkgs.callPackage naersk {
+          cargo = toolchain;
+          rustc = toolchain;
+        };
         package = naersk'.buildPackage {
           src = ./.;
         };
