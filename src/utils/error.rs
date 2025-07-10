@@ -1,8 +1,6 @@
-use std::sync::{PoisonError, RwLockWriteGuard};
-
-use thiserror::Error;
-
 use crate::command::state::AppState;
+use std::sync::{PoisonError, RwLockReadGuard, RwLockWriteGuard};
+use thiserror::Error;
 
 #[derive(Debug, Error)]
 pub enum AppError {
@@ -26,6 +24,12 @@ pub enum AppError {
 
 impl From<PoisonError<RwLockWriteGuard<'_, AppState>>> for AppError {
     fn from(_value: PoisonError<RwLockWriteGuard<'_, AppState>>) -> Self {
+        Self::Lock
+    }
+}
+
+impl From<PoisonError<RwLockReadGuard<'_, AppState>>> for AppError {
+    fn from(_value: PoisonError<RwLockReadGuard<'_, AppState>>) -> Self {
         Self::Lock
     }
 }

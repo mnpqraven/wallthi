@@ -5,7 +5,7 @@ use crate::{
     utils::error::AppError,
 };
 use daemonize::Daemonize;
-use std::{collections::HashMap, fs::File};
+use std::fs::File;
 use tokio::net::TcpListener;
 use tracing::info;
 
@@ -13,7 +13,7 @@ use tracing::info;
 // https://stackoverflow.com/questions/76042987/having-problem-in-rust-with-tokio-and-daemonize-how-to-get-them-to-work-togethe
 #[tokio::main]
 pub async fn main_loop(dot_conf: DotfileTreeConfig) -> Result<(), AppError> {
-    let daemon = WallthiDaemon::new();
+    let daemon = WallthiDaemon::new(&dot_conf);
 
     // see https://tokio.rs/tokio/tutorial/shared-state
     let listener = TcpListener::bind(daemon.addr).await?;
@@ -60,22 +60,4 @@ pub fn start_daemonized() -> Result<(), daemonize::Error> {
         .stdout(stdout)
         .stderr(stderr);
     daemonize.start()
-}
-
-#[derive(Debug)]
-pub struct WallthiStatus {
-    // key: monitor name
-    // value: current information about he wallpaper
-    // if there's mismatch between this and `swww query` then swww takes priority
-    // on correctness
-    pub _current_wallpapers: HashMap<String, MonitorStatus>,
-}
-#[derive(Debug)]
-pub struct MonitorStatus {
-    pub _path: Option<String>,
-    pub _remaining_duration: u64,
-}
-
-pub fn daemon_status() -> Result<WallthiStatus, AppError> {
-    todo!()
 }

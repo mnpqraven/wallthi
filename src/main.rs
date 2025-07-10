@@ -6,7 +6,7 @@ use crate::{
 use clap::Parser;
 use std::path::PathBuf;
 use tokio::runtime::Runtime;
-use tracing::{debug, info};
+use tracing::info;
 
 mod command;
 mod daemon;
@@ -28,15 +28,14 @@ fn main() -> Result<(), AppError> {
     tracing_subscriber::fmt::init();
 
     let args = CliArgs::parse();
-    // TODO: config reader in usr directories
-    let dot_conf = match args.config {
-        Some(conf_path) => read_config(conf_path)?,
-        None => match DotfileTreeConfig::first_valid() {
-            Some(conf_path) => read_config(conf_path)?,
-            None => DotfileTreeConfig::default(),
-        },
-    };
 
+    let dot_conf = match (args.config, DotfileTreeConfig::first_valid()) {
+        (Some(conf_path), _) | (None, Some(conf_path)) => {
+            info!("using config file at {conf_path:?}");
+            read_config(conf_path)?
+        }
+        _ => DotfileTreeConfig::default(),
+    };
     info!("{dot_conf:?}");
 
     match args.command {
@@ -45,11 +44,6 @@ fn main() -> Result<(), AppError> {
                 daemon::start_daemonized()?;
             }
             daemon::main_loop(dot_conf)?;
-        }
-        Commands::Status => {
-            // TODO: tokio talks to daemon
-            let status = daemon::daemon_status()?;
-            info!("{status:?}");
         }
         cmd => {
             let rt = Runtime::new()?;
