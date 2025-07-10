@@ -40,9 +40,10 @@ pub fn swww_loop(
 ) -> Result<(), AppError> {
     info!("logging isolation code snippets {conf:?} {global_conf:?}");
     // TODO: resolver for ~
-    let wall_dirs = match conf.vertical {
-        Some(true) => global_conf.general.path_vertical.clone(),
-        _ => global_conf.general.path.clone(),
+    let wall_dirs = if conf.vertical {
+        global_conf.general.path_vertical.clone()
+    } else {
+        global_conf.general.path.clone()
     };
 
     // TODO: killswitch

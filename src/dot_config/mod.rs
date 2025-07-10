@@ -74,8 +74,10 @@ impl Default for GeneralConfig {
 pub struct MonitorConfig {
     pub resolution: String,
     /// transform rotation degree
-    pub transform: Option<i32>,
-    pub vertical: Option<bool>,
+    /// defaults 0
+    pub transform: i32,
+    /// defaults false
+    pub vertical: bool,
 }
 
 pub fn read_config<P: AsRef<Path>>(path: P) -> Result<DotfileTreeConfig, AppError> {

@@ -12,16 +12,11 @@ let
   inherit (pkgs.stdenv.hostPlatform) system;
   package = self.packages.${system}.default;
 
-  settingsFormat = pkgs.formats.toml { };
+  tomlFormat = pkgs.formats.toml { };
 
-  # place this inside xdg config
-  settingsFile = settingsFormat.generate "config.toml" cfg.settings;
-  monitorConfigType = with lib; {
-    resolution = types.string;
-    transform = nullOr types.int;
-    vertical = nullOr types.bool;
-  };
+  settingsFileToml = tomlFormat.generate "config.toml" cfg.settings;
 in
+with lib;
 {
   options.programs.wallthi = {
     enable = lib.mkEnableOption "swww wrapper";
@@ -54,27 +49,46 @@ in
         };
       };
 
-      # monitor = lib.mkOption {
-      #   default = { };
-      #   type = lib.types.attrsOf monitorConfigType;
-      #   example = lib.literalExpression ''
-      #     {
-      #       "HDMI-A-1" = {
-      #         resolution = "1920x1080";
-      #         transform = 90;
-      #         vertical = true;
-      #       };
-      #     }
-      #   '';
-      #   description = "map containing monitor name and config as key-value";
-      # };
+      monitor = lib.mkOption {
+        default = { };
+        type =
+          with types;
+          attrsOf (
+            submodule (
+              { name, ... }:
+              {
+                options = {
+                  resolution = mkOption { type = str; };
+                  transform = mkOption {
+                    type = nullOr int;
+                    default = 0;
+                  };
+                  vertical = mkOption {
+                    type = nullOr bool;
+                    default = false;
+                  };
+                };
+              }
+            )
+          );
+        example = lib.literalExpression ''
+          {
+            "HDMI-A-1" = {
+              resolution = "1920x1080";
+              transform = 90;
+              vertical = true;
+            };
+          }
+        '';
+        description = "map containing monitor name and config as key-value";
+      };
     };
   };
 
   config = lib.mkIf cfg.enable {
     home.packages = [ cfg.package ];
     xdg.configFile."wallthi/config.conf" = {
-      source = settingsFile;
+      source = settingsFileToml;
     };
   };
 }
