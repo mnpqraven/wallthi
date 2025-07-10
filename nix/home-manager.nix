@@ -87,7 +87,7 @@ with lib;
 
   config = lib.mkIf cfg.enable {
     home.packages = [ cfg.package ];
-    xdg.configFile."wallthi/config.conf" = {
+    xdg.configFile."wallthi/config.toml" = {
       source = settingsFileToml;
     };
   };

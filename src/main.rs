@@ -31,10 +31,13 @@ fn main() -> Result<(), AppError> {
     // TODO: config reader in usr directories
     let dot_conf = match args.config {
         Some(conf_path) => read_config(conf_path)?,
-        None => DotfileTreeConfig::default(),
+        None => match DotfileTreeConfig::first_valid() {
+            Some(conf_path) => read_config(conf_path)?,
+            None => DotfileTreeConfig::default(),
+        },
     };
 
-    debug!("{dot_conf:?}");
+    info!("{dot_conf:?}");
 
     match args.command {
         Commands::Start { daemon } => {

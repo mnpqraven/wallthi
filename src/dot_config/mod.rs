@@ -1,6 +1,10 @@
 use crate::utils::error::AppError;
 use serde::{Deserialize, Serialize};
-use std::{collections::HashMap, fs::read_to_string, path::Path};
+use std::{
+    collections::HashMap,
+    fs::read_to_string,
+    path::{Path, PathBuf},
+};
 use strum::IntoStaticStr;
 
 /// later to be dotfile
@@ -12,6 +16,19 @@ pub struct DotfileTreeConfig {
     pub monitor: HashMap<String, MonitorConfig>,
     /// optional configuration of the swww daemon
     pub swww: Option<SwwwConf>,
+}
+
+impl DotfileTreeConfig {
+    /// config.toml in home/{user}/.config/wallthi
+    pub fn first_valid() -> Option<PathBuf> {
+        let mut path: Option<PathBuf> = None;
+        if let Ok(username) = std::env::var("USER") {
+            path = Some(PathBuf::from(format!(
+                "/home/{username}/.config/wallthi/config.toml"
+            )));
+        }
+        path
+    }
 }
 
 impl Default for DotfileTreeConfig {
