@@ -15,6 +15,7 @@
       naersk,
       nixpkgs,
       nixpkgs-mozilla,
+      self,
       ...
     }:
     flake-utils.lib.eachDefaultSystem (
@@ -41,7 +42,10 @@
       in
       {
         # nix build and nix run
-        defaultPackage = package;
+        packages = {
+          default = package;
+          wallthi = self.packages.${system}.default;
+        };
 
         # nix develop
         devShell = pkgs.mkShell {
@@ -51,5 +55,8 @@
           ];
         };
       }
-    );
+    )
+    // {
+      homeManagerModules.default = import ./nix/home-manager.nix self;
+    };
 }
