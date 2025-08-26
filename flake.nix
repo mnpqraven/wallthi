@@ -30,7 +30,7 @@
         toolchain =
           (pkgs.rustChannelOf {
             rustToolchain = ./rust-toolchain.toml;
-            sha256 = "sha256-6k1KpO4EeeJE65qomJvmJHcwfcK9LlUUaGeQlhA1zbk=";
+            sha256 = "sha256-TrUGnA/3q9khZsvJYUuw8LMLKqXV7hnlfkIFaW8BcP8=";
           }).rust;
         naersk' = pkgs.callPackage naersk {
           cargo = toolchain;
