@@ -54,5 +54,7 @@ fn main() -> Result<(), AppError> {
         }
     };
 
+    // TODO: graceful shutdown needs deletion of pid lock files in /tmp
+
     Ok(())
 }

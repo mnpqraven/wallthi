@@ -28,7 +28,7 @@
           ];
         };
         toolchain = pkgs.rust-bin.fromRustupToolchain (
-          (builtins.fromTOML (builtins.readFile ./rust-toolchain.toml)).toolchain // { "components" = [ ]; }
+          (fromTOML (builtins.readFile ./rust-toolchain.toml)).toolchain // { "components" = [ ]; }
         );
         naersk' = pkgs.callPackage naersk {
           cargo = toolchain;
