@@ -85,7 +85,7 @@ impl WallthiDaemon {
 pub struct WallthiStatus {
     // key: monitor name
     // value: current information about he wallpaper
-    // if there's mismatch between this and `swww query` then swww takes priority
+    // if there's mismatch between this and `awww query` then awww takes priority
     // on correctness
     pub current_wallpapers: HashMap<String, MonitorStatus>,
 }

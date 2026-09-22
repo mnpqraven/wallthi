@@ -1,5 +1,5 @@
 use crate::{
-    command::{state::WallthiDaemon, swww_loop},
+    command::{awww_loop, state::WallthiDaemon},
     dot_config::DotfileTreeConfig,
     tcp,
     utils::error::AppError,
@@ -28,7 +28,7 @@ pub async fn main_loop(dot_conf: DotfileTreeConfig) -> Result<(), AppError> {
         let dot_conf = dot_conf.clone();
         let handle = tokio::spawn(async move {
             info!("starting task for monitor {monitor} with conf {monitor_conf:?}");
-            swww_loop(&monitor, &monitor_conf, &dot_conf, state)?;
+            awww_loop(&monitor, &monitor_conf, &dot_conf, state)?;
             Ok::<(), AppError>(())
         });
         handles.push(handle);

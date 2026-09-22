@@ -19,7 +19,7 @@ in
 with lib;
 {
   options.programs.wallthi = {
-    enable = lib.mkEnableOption "swww wrapper";
+    enable = lib.mkEnableOption "awww wrapper";
 
     package = lib.mkOption {
       type = lib.types.package;

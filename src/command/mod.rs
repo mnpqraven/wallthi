@@ -1,6 +1,6 @@
 use crate::command::img_paths::random_img;
 use crate::command::state::AppState;
-use crate::dot_config::SwwwConf;
+use crate::dot_config::AwwwConf;
 use crate::{
     dot_config::{DotfileTreeConfig, MonitorConfig},
     utils::error::AppError,
@@ -18,11 +18,11 @@ pub mod state;
 pub enum Commands {
     /// prints the current status of the wallpaper queue
     Status,
-    /// pause all swww instances in queue
+    /// pause all awww instances in queue
     Pause,
-    /// resumes all swww instances in queue
+    /// resumes all awww instances in queue
     Resume,
-    /// starts all swww instances in queue
+    /// starts all awww instances in queue
     Start {
         /// start the application as a daemon
         #[clap(short, long)]
@@ -32,7 +32,7 @@ pub enum Commands {
     Quit,
 }
 
-pub fn swww_loop(
+pub fn awww_loop(
     monitor: &str,
     conf: &MonitorConfig,
     global_conf: &DotfileTreeConfig,
@@ -53,7 +53,7 @@ pub fn swww_loop(
         match daemon_state.try_read() {
             Ok(t) if t.should_exit => return Ok(()),
             Ok(t) if !t.is_paused => {
-                execute_swww(img, global_conf.swww.clone().unwrap_or_default(), monitor)?;
+                execute_awww(img, global_conf.awww.clone().unwrap_or_default(), monitor)?;
             }
             _ => {}
         }
@@ -62,15 +62,15 @@ pub fn swww_loop(
     }
 }
 
-fn execute_swww<P: AsRef<Path>>(img: P, swww_conf: SwwwConf, output: &str) -> Result<(), AppError> {
+fn execute_awww<P: AsRef<Path>>(img: P, awww_conf: AwwwConf, output: &str) -> Result<(), AppError> {
     if let Some(img_path) = img.as_ref().to_str() {
-        info!("[SWWW] executing cmd for img {img_path}");
+        info!("[AWWW] executing cmd for img {img_path}");
 
-        let resize_type: &str = swww_conf.resize_type.into();
-        let transition_step = swww_conf.transition_step.to_string();
-        let transition_fps = swww_conf.transition_fps.to_string();
+        let resize_type: &str = awww_conf.resize_type.into();
+        let transition_step = awww_conf.transition_step.to_string();
+        let transition_fps = awww_conf.transition_fps.to_string();
 
-        let cmd = Command::new("swww")
+        let cmd = Command::new("awww")
             .args([
                 "img",
                 "--resize",
@@ -87,7 +87,7 @@ fn execute_swww<P: AsRef<Path>>(img: P, swww_conf: SwwwConf, output: &str) -> Re
 
         if !cmd.status.success() {
             let sig = cmd.status.code();
-            warn!("swww command failed with status code {sig:?}");
+            warn!("awww command failed with status code {sig:?}");
             let stdout = String::from_utf8_lossy(&cmd.stdout);
             warn!("{stdout:?}");
         }
